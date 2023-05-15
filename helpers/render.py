@@ -11,7 +11,6 @@ import numpy as np
 from PIL import Image, ImageChops, ImageOps, ImageEnhance
 import pathlib
 import torchvision.transforms as T
-from torch import nn
 
 from .generate import generate, add_noise
 from .prompt import sanitize
@@ -30,40 +29,6 @@ except ModuleNotFoundError:
     from numpngw import write_png
 
 #import tifffile # Un-comment to save 32bpc TIFF images too. Also un-comment line within 'def save_8_16_or_32bpc_image()'
-
-# This function creates a blended model given two models and a mixing ratio
-def create_blended_model(model1, model2, model_mixing_ratio):
-    model = nn.Sequential()
-    for name, child1, child2 in zip(model1.named_children(), model2.named_children()):
-        if name[0] == "transformer":
-            layers1 = list(child1[1].named_children())
-            layers2 = list(child2[1].named_children())
-            new_transformer = nn.Transformer(
-                d_model=layers1[0][1].d_model,
-                nhead=layers1[0][1].nhead,
-                num_encoder_layers=layers1[0][1].num_layers,
-                num_decoder_layers=layers1[0][1].num_layers,
-                dim_feedforward=layers1[0][1].dim_feedforward,
-            )
-            for i, (encoder_layer1, encoder_layer2) in enumerate(
-                zip(layers1[0][1].layers, layers2[0][1].layers)
-            ):
-                new_transformer.encoder.layers[i] = encoder_layer1.ln_post * (
-                    1 - model_mixing_ratio
-                ) + encoder_layer2.ln_post * model_mixing_ratio
-            for i, (decoder_layer1, decoder_layer2) in enumerate(
-                zip(layers1[1][1].layers, layers2[1][1].layers)
-            ):
-                new_transformer.decoder.layers[i] = decoder_layer1.ln_post * (
-                    1 - model_mixing_ratio
-                ) + decoder_layer2.ln_post * model_mixing_ratio
-            model.add_module(name[0], new_transformer)
-        else:
-            model.add_module(
-                name[0],
-                child1 * (1 - model_mixing_ratio) + child2 * model_mixing_ratio,
-            )
-    return model
 
 # This function converts the image to 8bpc (if it isn't already) to display it on browser.
 def convert_image_to_8bpc(image, bit_depth_output): 
@@ -110,22 +75,9 @@ def next_seed(args):
         args.seed = random.randint(0, 2**32 - 1)
     return args.seed
 
-# Define your paths to the secondary model's checkpoint and configuration files.
-# Replace these with the actual paths.
-model_ckpt2 = '/content/drive/MyDrive/AI/models/sd-v1-4.ckpt'
-model_yaml2 = '/content/D/configs/v1-inference.yaml'
-
-def render_image_batch(args, prompts, root, model_ckpt2, model_yaml2):
+def render_image_batch(args, prompts, root):
     args.prompts = {k: f"{v:05d}" for v, k in enumerate(prompts)}
     args.using_vid_init = False
-    
-     # Create the blended model
-    model1 = load_model(args.model_ckpt, args.model_yaml, root)
-    model2 = load_model(model_ckpt2, model_yaml2, root)
-    blended_model = create_blended_model(model1, model2, args.model_mixing_ratio)
-    
-    # Replace the original model with the blended one
-    args.model = blended_model
     
     # create output folder for the batch
     os.makedirs(args.outdir, exist_ok=True)
