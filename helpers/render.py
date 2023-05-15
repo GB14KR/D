@@ -112,8 +112,8 @@ def next_seed(args):
 
 # Define your paths to the secondary model's checkpoint and configuration files.
 # Replace these with the actual paths.
-model_ckpt2 = '/content/drive/MyDrive/AI/models/sd-v1-4.ckpt'
-model_yaml2 = '/content/D/configs/v1-inference.yaml'
+model_ckpt2 = model_checkpoint_2
+model_yaml2 = model_config_2
 
 def render_image_batch(args, prompts, root, model_ckpt2, model_yaml2):
     args.prompts = {k: f"{v:05d}" for v, k in enumerate(prompts)}
