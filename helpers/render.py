@@ -110,6 +110,11 @@ def next_seed(args):
         args.seed = random.randint(0, 2**32 - 1)
     return args.seed
 
+# Define your paths to the secondary model's checkpoint and configuration files.
+# Replace these with the actual paths.
+model_ckpt2 = '/content/drive/MyDrive/AI/models/sd-v1-4.ckpt'
+model_yaml2 = '/content/D/configs/v1-inference.yaml'
+
 def render_image_batch(args, prompts, root, model_ckpt2, model_yaml2):
     args.prompts = {k: f"{v:05d}" for v, k in enumerate(prompts)}
     args.using_vid_init = False
