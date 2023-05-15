@@ -69,16 +69,13 @@ def download_model(model_map,root):
 
 
 #@profile
-def load_model(root, model_config, model_checkpoint, load_on_run_all=True, check_sha256=True, map_location="cuda"):
+def load_model(root, load_on_run_all=True, check_sha256=True, map_location="cuda"):
 
     import torch
     from ldm.util import instantiate_from_config
     from omegaconf import OmegaConf
     from transformers import logging
     logging.set_verbosity_error()
-
-    root.model_config = model_config
-    root.model_checkpoint = model_checkpoint
 
     try:
         ipy = get_ipython()
